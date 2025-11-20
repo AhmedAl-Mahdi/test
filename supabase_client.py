@@ -95,3 +95,96 @@ def get_chat_history(supabase_client):
     """Retrieves all conversations and their messages for the current user."""
     # This is a placeholder for a future feature to view past chats.
     pass
+
+# --- MEDICATION MANAGEMENT FUNCTIONS ---
+
+def save_medication(supabase_client, medication_data):
+    """
+    Saves a medication record to the database.
+    Args:
+        supabase_client: Supabase client instance
+        medication_data: Dictionary containing medication information
+    Returns:
+        The medication ID if successful, None otherwise
+    """
+    try:
+        # Convert medication data to JSON string for storage
+        medication_json = json.dumps(medication_data)
+        
+        data_to_insert = {
+            "medication_data": medication_json
+        }
+        
+        response = supabase_client.table('medications').insert(data_to_insert).execute()
+        
+        if response.data and len(response.data) > 0:
+            return response.data[0]['id']
+        return None
+        
+    except Exception as e:
+        print(f"Error saving medication: {e}")
+        return None
+
+def get_medications(supabase_client):
+    """
+    Retrieves all medications for the currently logged-in user.
+    Returns:
+        List of medication records
+    """
+    try:
+        response = supabase_client.table('medications').select('*').order('created_at', desc=False).execute()
+        
+        if response.data:
+            # Parse the JSON data for each medication
+            medications = []
+            for record in response.data:
+                med_data = json.loads(record['medication_data'])
+                med_data['id'] = record['id']
+                med_data['db_created_at'] = record['created_at']
+                medications.append(med_data)
+            return medications
+        return []
+        
+    except Exception as e:
+        print(f"Error fetching medications: {e}")
+        return []
+
+def update_medication(supabase_client, medication_id, medication_data):
+    """
+    Updates an existing medication record.
+    Args:
+        supabase_client: Supabase client instance
+        medication_id: ID of the medication to update
+        medication_data: Updated medication data
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        medication_json = json.dumps(medication_data)
+        
+        response = supabase_client.table('medications').update({
+            "medication_data": medication_json
+        }).eq('id', medication_id).execute()
+        
+        return len(response.data) > 0
+        
+    except Exception as e:
+        print(f"Error updating medication: {e}")
+        return False
+
+def delete_medication(supabase_client, medication_id):
+    """
+    Deletes a medication record.
+    Args:
+        supabase_client: Supabase client instance
+        medication_id: ID of the medication to delete
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        response = supabase_client.table('medications').delete().eq('id', medication_id).execute()
+        return True
+        
+    except Exception as e:
+        print(f"Error deleting medication: {e}")
+        return False
