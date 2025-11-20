@@ -199,8 +199,8 @@ with tab2:
                     if result == "medications_table_missing":
                         st.error("⚠️ Database Error: The 'medications' table does not exist.")
                         st.info("**Setup Required:** Please create the medications table in Supabase. See SUPABASE_SETUP.md for SQL commands.", icon="📚")
-                        with st.expander("Quick Fix - SQL Command"):
-                            st.code("""
+                        st.markdown("**Quick Fix - Run this SQL command:**")
+                        st.code("""
 CREATE TABLE medications (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL DEFAULT auth.uid(),
@@ -214,7 +214,7 @@ CREATE POLICY "Users can manage their own medications"
   ON medications
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
-                            """, language="sql")
+                        """, language="sql")
                     elif result == "rls_policy_error":
                         st.error("⚠️ Permission Error: Cannot save medication due to Row Level Security policy.")
                         st.info("Please check that RLS policies are correctly configured in Supabase. See SUPABASE_SETUP.md for details.", icon="🔒")
