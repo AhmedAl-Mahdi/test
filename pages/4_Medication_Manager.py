@@ -193,10 +193,7 @@ with tab2:
                 if success:
                     st.success(f"✅ {med_name} has been added to your medication list!")
                     st.info(f"You will receive a reminder {reminder_choice} before your scheduled dose at {med_schedule.strftime('%I:%M %p')}.")
-                    
-                    # Show a button to view medications
-                    if st.button("View My Medications"):
-                        st.rerun()
+                    st.info("💡 Switch to the 'My Medications' tab to view all your medications.", icon="👉")
                 else:
                     # Handle different error types
                     if result == "medications_table_missing":
