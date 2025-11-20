@@ -1,4 +1,4 @@
-# .streamlit/config.toml
+# Streamlit configuration file
 
 [client]
 # This is a more effective setting. It configures the toolbar for "viewer"
