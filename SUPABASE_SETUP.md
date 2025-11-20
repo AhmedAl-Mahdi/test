@@ -89,6 +89,36 @@ If users cannot log in:
 2. Verify Row Level Security policies are properly configured
 3. Ensure the auth.users table is accessible
 
+### Email Verification Link Issues
+If clicking verification links shows "This site can't be reached":
+
+1. **Configure Site URL in Supabase Dashboard:**
+   - Go to Authentication → URL Configuration in Supabase dashboard
+   - Set **Site URL** to your app's URL:
+     - For local development: `http://localhost:8501`
+     - For Streamlit Cloud: `https://your-app-name.streamlit.app`
+   
+2. **Add Redirect URLs:**
+   - In the same URL Configuration section
+   - Add your app URL to **Redirect URLs** list:
+     - Local: `http://localhost:8501`
+     - Production: `https://your-app-name.streamlit.app`
+   
+3. **Email Template Configuration:**
+   - Go to Authentication → Email Templates
+   - Ensure the confirmation email uses `{{ .ConfirmationURL }}` correctly
+   - The default template should work, but verify the link points to your Site URL
+
+4. **Disable Email Confirmation (Optional - for development only):**
+   - Go to Authentication → Providers → Email
+   - Toggle off "Confirm email" if you want to skip verification during development
+   - **Warning:** Re-enable this for production!
+
+5. **Test the Fix:**
+   - Clear browser cache/cookies
+   - Sign up with a new email
+   - Check that the verification link now works
+
 ## Security Notes
 
 - **Never commit the `secrets.toml` file** - it's already in `.gitignore`
