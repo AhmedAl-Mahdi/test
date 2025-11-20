@@ -1,0 +1,17 @@
+# .streamlit/config.toml
+
+[client]
+# This is a more effective setting. It configures the toolbar for "viewer"
+# mode, which has the fewest controls.
+toolbarMode = "viewer"
+
+# This is still good practice to hide error details from users.
+showErrorDetails = false
+
+[theme]
+# Your theme settings are perfect and remain unchanged.
+primaryColor = "#00C497"
+backgroundColor = "#0A192F"
+secondaryBackgroundColor = "#1E3A5F"
+textColor = "#FFFFFF"
+font = "sans serif"
