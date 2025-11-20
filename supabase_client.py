@@ -105,7 +105,7 @@ def save_medication(supabase_client, medication_data):
         supabase_client: Supabase client instance
         medication_data: Dictionary containing medication information
     Returns:
-        The medication ID if successful, None otherwise
+        Tuple of (success: bool, error_message: str or None)
     """
     try:
         # Convert medication data to JSON string for storage
@@ -118,12 +118,19 @@ def save_medication(supabase_client, medication_data):
         response = supabase_client.table('medications').insert(data_to_insert).execute()
         
         if response.data and len(response.data) > 0:
-            return response.data[0]['id']
-        return None
+            return (True, response.data[0]['id'])
+        return (False, "No data returned from database")
         
     except Exception as e:
-        print(f"Error saving medication: {e}")
-        return None
+        error_msg = str(e)
+        # Check for common errors
+        if "relation" in error_msg and "does not exist" in error_msg:
+            return (False, "medications_table_missing")
+        elif "violates row-level security policy" in error_msg or "RLS" in error_msg:
+            return (False, "rls_policy_error")
+        else:
+            print(f"Error saving medication: {e}")
+            return (False, f"Database error: {error_msg}")
 
 def get_medications(supabase_client):
     """

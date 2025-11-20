@@ -188,9 +188,9 @@ with tab2:
                 )
                 
                 # Save to database
-                med_id = save_medication(supabase, medication)
+                success, result = save_medication(supabase, medication)
                 
-                if med_id:
+                if success:
                     st.success(f"✅ {med_name} has been added to your medication list!")
                     st.info(f"You will receive a reminder {reminder_choice} before your scheduled dose at {med_schedule.strftime('%I:%M %p')}.")
                     
@@ -198,7 +198,32 @@ with tab2:
                     if st.button("View My Medications"):
                         st.rerun()
                 else:
-                    st.error("Failed to save medication. Please try again.")
+                    # Handle different error types
+                    if result == "medications_table_missing":
+                        st.error("⚠️ Database Error: The 'medications' table does not exist.")
+                        st.info("**Setup Required:** Please create the medications table in Supabase. See SUPABASE_SETUP.md for SQL commands.", icon="📚")
+                        with st.expander("Quick Fix - SQL Command"):
+                            st.code("""
+CREATE TABLE medications (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL DEFAULT auth.uid(),
+  medication_data JSONB NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE medications ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage their own medications"
+  ON medications
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+                            """, language="sql")
+                    elif result == "rls_policy_error":
+                        st.error("⚠️ Permission Error: Cannot save medication due to Row Level Security policy.")
+                        st.info("Please check that RLS policies are correctly configured in Supabase. See SUPABASE_SETUP.md for details.", icon="🔒")
+                    else:
+                        st.error(f"Failed to save medication: {result}")
+                        st.info("Check the SUPABASE_SETUP.md file for database setup instructions.", icon="📚")
 
 # --- Auto-refresh for live reminders ---
 st.markdown("---")

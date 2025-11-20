@@ -2,6 +2,39 @@
 
 This document explains how to configure Supabase for the Care-AI application.
 
+## ⚠️ IMPORTANT: Database Setup Required
+
+**Before using the Medication Manager**, you MUST create the required database tables in Supabase. The app will fail with "medications table does not exist" error if you skip this step.
+
+### Quick Start - Create the Medications Table
+
+1. Go to your Supabase Dashboard → SQL Editor
+2. Run this SQL command:
+
+```sql
+-- Create medications table
+CREATE TABLE medications (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL DEFAULT auth.uid(),
+  medication_data JSONB NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable Row Level Security
+ALTER TABLE medications ENABLE ROW LEVEL SECURITY;
+
+-- Create policy for users to access only their own medications
+CREATE POLICY "Users can manage their own medications"
+  ON medications
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+```
+
+3. Click "Run" to create the table
+4. You can now use the Medication Manager feature!
+
+---
+
 ## Setup Instructions
 
 ### 1. Local Development
@@ -37,7 +70,7 @@ The application requires the following Supabase tables:
 ```sql
 CREATE TABLE medications (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES auth.users(id),
+  user_id UUID NOT NULL DEFAULT auth.uid(),
   medication_data JSONB NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -46,21 +79,10 @@ CREATE TABLE medications (
 ALTER TABLE medications ENABLE ROW LEVEL SECURITY;
 
 -- Create policy for users to access only their own medications
-CREATE POLICY "Users can view their own medications"
-  ON medications FOR SELECT
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert their own medications"
-  ON medications FOR INSERT
+CREATE POLICY "Users can manage their own medications"
+  ON medications
+  USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update their own medications"
-  ON medications FOR UPDATE
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete their own medications"
-  ON medications FOR DELETE
-  USING (auth.uid() = user_id);
 ```
 
 #### Other Required Tables
