@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException, Header
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
+from services.supabase_service import get_supabase_client
 from services.medication_manager import (
     get_user_medications,
     add_medication,
