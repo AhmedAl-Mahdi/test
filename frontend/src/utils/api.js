@@ -264,4 +264,59 @@ export const medicationsAPI = {
       body: JSON.stringify(settings),
     });
   },
+
+  async getLowInventory() {
+    return apiRequest('/medications/inventory/low');
+  },
+
+  async updateInventory(medicationId, count) {
+    return apiRequest(`/medications/${medicationId}/inventory`, {
+      method: 'PUT',
+      body: JSON.stringify({ count }),
+    });
+  },
+};
+
+/**
+ * Profile API methods
+ */
+export const profileAPI = {
+  async get() {
+    return apiRequest('/profile/');
+  },
+
+  async update(profile) {
+    return apiRequest('/profile/', {
+      method: 'PUT',
+      body: JSON.stringify(profile),
+    });
+  },
+
+  async getHealthTips() {
+    return apiRequest('/profile/health-tips');
+  },
+};
+
+/**
+ * Screening API methods
+ */
+export const screeningAPI = {
+  async getQuestionnaires() {
+    return apiRequest('/screening/questionnaires');
+  },
+
+  async getQuestionnaire(type) {
+    return apiRequest(`/screening/questionnaires/${type}`);
+  },
+
+  async submit(screeningType, answers) {
+    return apiRequest('/screening/submit', {
+      method: 'POST',
+      body: JSON.stringify({ screening_type: screeningType, answers }),
+    });
+  },
+
+  async getHistory() {
+    return apiRequest('/screening/history');
+  },
 };

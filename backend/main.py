@@ -13,6 +13,8 @@ from routes.chat import router as chat_router
 from routes.imaging import router as imaging_router
 from routes.notifications import router as notifications_router
 from routes.medications import router as medications_router
+from routes.profile import router as profile_router
+from routes.screening import router as screening_router
 
 # Load environment variables
 load_dotenv()
@@ -47,6 +49,8 @@ app.include_router(chat_router, prefix="/api/chat", tags=["MindWell Chatbot"])
 app.include_router(imaging_router, prefix="/api/imaging", tags=["Diagnostic Imaging"])
 app.include_router(notifications_router, prefix="/api/notifications", tags=["Notifications"])
 app.include_router(medications_router, prefix="/api/medications", tags=["Medication Manager"])
+app.include_router(profile_router, prefix="/api/profile", tags=["User Profile"])
+app.include_router(screening_router, prefix="/api/screening", tags=["Health Screening"])
 
 
 @app.get("/")

@@ -31,7 +31,9 @@ def add_medication(
     dosage: str,
     schedule: str,
     reminder_minutes_before: int = 15,
-    notes: str = ""
+    notes: str = "",
+    inventory_count: int = 0,
+    inventory_threshold: int = 5
 ) -> Optional[Dict[str, Any]]:
     """
     Adds a new medication for a user.
@@ -43,6 +45,8 @@ def add_medication(
         schedule: Schedule string (e.g., "daily at 08:00", "every 8 hours")
         reminder_minutes_before: How many minutes before dose to send reminder
         notes: Additional notes about the medication
+        inventory_count: Current inventory count
+        inventory_threshold: Threshold for low inventory warning
     
     Returns:
         The created medication record or None if failed
@@ -57,6 +61,8 @@ def add_medication(
             "schedule": schedule,
             "reminder_minutes_before": reminder_minutes_before,
             "notes": notes,
+            "inventory_count": inventory_count,
+            "inventory_threshold": inventory_threshold,
             "is_active": True
         }
         
@@ -90,7 +96,7 @@ def update_medication(
         supabase = get_supabase_client()
         
         # Only allow updating specific fields
-        allowed_fields = ['name', 'dosage', 'schedule', 'reminder_minutes_before', 'notes', 'is_active']
+        allowed_fields = ['name', 'dosage', 'schedule', 'reminder_minutes_before', 'notes', 'is_active', 'inventory_count', 'inventory_threshold']
         safe_updates = {k: v for k, v in updates.items() if k in allowed_fields}
         
         response = supabase.table('medications').update(safe_updates).eq('id', medication_id).eq('user_id', user_id).execute()
@@ -124,14 +130,15 @@ def delete_medication(medication_id: str, user_id: str) -> bool:
         return False
 
 
-def log_medication_taken(medication_id: str, user_id: str, taken_at: Optional[datetime] = None) -> Optional[Dict[str, Any]]:
+def log_medication_taken(medication_id: str, user_id: str, taken_at: Optional[datetime] = None, decrement_inventory: bool = True) -> Optional[Dict[str, Any]]:
     """
-    Logs that a medication dose was taken.
+    Logs that a medication dose was taken and optionally decrements inventory.
     
     Args:
         medication_id: The medication's ID
         user_id: The user's ID
         taken_at: When the dose was taken (defaults to now)
+        decrement_inventory: Whether to decrement the inventory count
     
     Returns:
         The log entry or None if failed
@@ -146,6 +153,16 @@ def log_medication_taken(medication_id: str, user_id: str, taken_at: Optional[da
         }
         
         response = supabase.table('medication_logs').insert(log_data).execute()
+        
+        # Decrement inventory if enabled
+        if decrement_inventory:
+            try:
+                med_response = supabase.table('medications').select('inventory_count').eq('id', medication_id).eq('user_id', user_id).single().execute()
+                if med_response.data and med_response.data.get('inventory_count', 0) > 0:
+                    new_count = med_response.data['inventory_count'] - 1
+                    supabase.table('medications').update({'inventory_count': new_count}).eq('id', medication_id).execute()
+            except Exception as inv_err:
+                print(f"Error updating inventory: {inv_err}")
         
         if response.data and len(response.data) > 0:
             return response.data[0]
@@ -353,3 +370,65 @@ def update_reminder_settings(user_id: str, settings: Dict[str, Any]) -> bool:
     except Exception as e:
         print(f"Error updating reminder settings: {e}")
         return False
+
+
+def get_low_inventory_alerts(user_id: str) -> List[Dict[str, Any]]:
+    """
+    Gets medications with inventory below threshold.
+    
+    Args:
+        user_id: The user's ID
+    
+    Returns:
+        List of medications with low inventory
+    """
+    try:
+        medications = get_user_medications(user_id)
+        low_inventory = []
+        
+        for med in medications:
+            if not med.get('is_active', True):
+                continue
+                
+            inventory = med.get('inventory_count', 0)
+            threshold = med.get('inventory_threshold', 5)
+            
+            if inventory <= threshold:
+                low_inventory.append({
+                    'medication': med,
+                    'inventory_count': inventory,
+                    'threshold': threshold,
+                    'message': f"Low inventory: {med['name']} has only {inventory} doses left"
+                })
+        
+        return low_inventory
+    except Exception as e:
+        print(f"Error getting low inventory alerts: {e}")
+        return []
+
+
+def update_inventory(medication_id: str, user_id: str, new_count: int) -> Optional[Dict[str, Any]]:
+    """
+    Updates the inventory count for a medication.
+    
+    Args:
+        medication_id: The medication's ID
+        user_id: The user's ID
+        new_count: The new inventory count
+    
+    Returns:
+        The updated medication or None if failed
+    """
+    try:
+        supabase = get_supabase_client()
+        
+        response = supabase.table('medications').update({
+            'inventory_count': max(0, new_count)
+        }).eq('id', medication_id).eq('user_id', user_id).execute()
+        
+        if response.data and len(response.data) > 0:
+            return response.data[0]
+        return None
+    except Exception as e:
+        print(f"Error updating inventory: {e}")
+        return None

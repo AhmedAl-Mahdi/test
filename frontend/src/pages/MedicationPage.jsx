@@ -11,7 +11,10 @@ import {
   Calendar,
   AlertCircle,
   Settings,
-  Loader2
+  Loader2,
+  Package,
+  AlertTriangle,
+  Minus
 } from 'lucide-react';
 import Layout from '../components/Layout';
 import { medicationsAPI } from '../utils/api';
@@ -23,6 +26,7 @@ export default function MedicationPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [editingMed, setEditingMed] = useState(null);
   const [reminders, setReminders] = useState([]);
+  const [lowInventoryAlerts, setLowInventoryAlerts] = useState([]);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -30,7 +34,9 @@ export default function MedicationPage() {
     dosage: '',
     schedule: '',
     reminder_minutes_before: 15,
-    notes: ''
+    notes: '',
+    inventory_count: 0,
+    inventory_threshold: 5
   });
   
   // Settings state
@@ -43,6 +49,7 @@ export default function MedicationPage() {
   // Load medications on mount
   useEffect(() => {
     fetchMedications();
+    fetchLowInventory();
     fetchReminders();
     fetchSettings();
   }, []);
@@ -71,6 +78,17 @@ export default function MedicationPage() {
     }
   };
 
+  const fetchLowInventory = async () => {
+    try {
+      const data = await medicationsAPI.getLowInventory();
+      if (data.success) {
+        setLowInventoryAlerts(data.alerts);
+      }
+    } catch (err) {
+      console.error('Error fetching low inventory:', err);
+    }
+  };
+
   const fetchSettings = async () => {
     try {
       const data = await medicationsAPI.getSettings();
@@ -79,6 +97,20 @@ export default function MedicationPage() {
       }
     } catch (err) {
       console.error('Error fetching settings:', err);
+    }
+  };
+
+  const handleUpdateInventory = async (medicationId, newCount) => {
+    try {
+      const data = await medicationsAPI.updateInventory(medicationId, newCount);
+      if (data.success) {
+        setMedications(meds => 
+          meds.map(m => m.id === medicationId ? { ...m, inventory_count: newCount } : m)
+        );
+        fetchLowInventory();
+      }
+    } catch (err) {
+      console.error('Error updating inventory:', err);
     }
   };
 
@@ -125,9 +157,11 @@ export default function MedicationPage() {
     try {
       const data = await medicationsAPI.logDose(medicationId);
       if (data.success) {
-        // Show success feedback
+        // Show success feedback and update inventory display
         alert('Dose logged successfully!');
         fetchReminders();
+        fetchMedications();
+        fetchLowInventory();
       }
     } catch (err) {
       console.error('Error logging dose:', err);
@@ -151,7 +185,9 @@ export default function MedicationPage() {
       dosage: '',
       schedule: '',
       reminder_minutes_before: 15,
-      notes: ''
+      notes: '',
+      inventory_count: 0,
+      inventory_threshold: 5
     });
   };
 
@@ -162,7 +198,9 @@ export default function MedicationPage() {
       dosage: med.dosage,
       schedule: med.schedule,
       reminder_minutes_before: med.reminder_minutes_before,
-      notes: med.notes || ''
+      notes: med.notes || '',
+      inventory_count: med.inventory_count || 0,
+      inventory_threshold: med.inventory_threshold || 5
     });
     setShowAddForm(true);
   };
@@ -250,6 +288,40 @@ export default function MedicationPage() {
           </div>
         )}
 
+        {/* Low Inventory Alerts */}
+        {lowInventoryAlerts.length > 0 && (
+          <div className="bg-red-500/20 border border-red-500/30 rounded-xl p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <AlertTriangle className="w-5 h-5 text-red-400" />
+              <span className="font-medium text-red-400">Low Inventory Alert</span>
+            </div>
+            <div className="space-y-2">
+              {lowInventoryAlerts.map((alert, idx) => (
+                <div key={idx} className="flex items-center justify-between bg-slate-800/50 rounded-lg p-3">
+                  <div>
+                    <p className="text-white font-medium">{alert.medication.name}</p>
+                    <p className="text-sm text-slate-400">{alert.message}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-red-400 font-medium">{alert.inventory_count} left</span>
+                    <button
+                      onClick={() => {
+                        const newCount = prompt('Enter new inventory count:', alert.inventory_count);
+                        if (newCount !== null) {
+                          handleUpdateInventory(alert.medication.id, parseInt(newCount) || 0);
+                        }
+                      }}
+                      className="px-3 py-1 bg-slate-700 text-white rounded-lg text-sm hover:bg-slate-600"
+                    >
+                      Refill
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Medications List */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
@@ -312,6 +384,33 @@ export default function MedicationPage() {
                     <Bell className="w-4 h-4" />
                     <span>Reminder: {med.reminder_minutes_before} min before</span>
                   </div>
+                  
+                  {/* Inventory Display */}
+                  <div className="flex items-center justify-between">
+                    <div className={`flex items-center gap-2 ${
+                      (med.inventory_count || 0) <= (med.inventory_threshold || 5) 
+                        ? 'text-red-400' 
+                        : 'text-slate-400'
+                    }`}>
+                      <Package className="w-4 h-4" />
+                      <span>Stock: {med.inventory_count || 0} doses</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleUpdateInventory(med.id, Math.max(0, (med.inventory_count || 0) - 1))}
+                        className="p-1 rounded hover:bg-slate-600 text-slate-400"
+                      >
+                        <Minus className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={() => handleUpdateInventory(med.id, (med.inventory_count || 0) + 1)}
+                        className="p-1 rounded hover:bg-slate-600 text-slate-400"
+                      >
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                  
                   {med.notes && (
                     <p className="text-slate-500 italic mt-2">{med.notes}</p>
                   )}
@@ -421,6 +520,47 @@ export default function MedicationPage() {
                     rows={2}
                     className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
                   />
+                </div>
+
+                {/* Inventory Section */}
+                <div className="border-t border-slate-600 pt-4 mt-2">
+                  <h4 className="text-sm font-medium text-slate-300 mb-3 flex items-center gap-2">
+                    <Package className="w-4 h-4" />
+                    Inventory Tracking
+                  </h4>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-1">
+                        Current Stock
+                      </label>
+                      <input
+                        type="number"
+                        value={formData.inventory_count}
+                        onChange={(e) => setFormData({ ...formData, inventory_count: parseInt(e.target.value) || 0 })}
+                        placeholder="0"
+                        min="0"
+                        className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-1">
+                        Low Stock Alert
+                      </label>
+                      <input
+                        type="number"
+                        value={formData.inventory_threshold}
+                        onChange={(e) => setFormData({ ...formData, inventory_threshold: parseInt(e.target.value) || 5 })}
+                        placeholder="5"
+                        min="1"
+                        className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-2">
+                    You'll be alerted when stock falls below the threshold
+                  </p>
                 </div>
 
                 <div className="flex gap-3 pt-4">

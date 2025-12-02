@@ -1,7 +1,9 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Stethoscope, Brain, ImagePlus, ArrowRight, Heart, Pill } from 'lucide-react';
+import { Stethoscope, Brain, ImagePlus, ArrowRight, Heart, Pill, ChevronLeft, ChevronRight, Lightbulb } from 'lucide-react';
 import { useAuth } from '../components/AuthContext';
 import Layout from '../components/Layout';
+import { profileAPI } from '../utils/api';
 
 const features = [
   {
@@ -36,6 +38,53 @@ const features = [
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const [healthTips, setHealthTips] = useState([]);
+  const [currentTipIndex, setCurrentTipIndex] = useState(0);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+
+  useEffect(() => {
+    fetchHealthTips();
+  }, []);
+
+  useEffect(() => {
+    if (!isAutoPlaying || healthTips.length === 0) return;
+    
+    const interval = setInterval(() => {
+      setCurrentTipIndex((prev) => (prev + 1) % healthTips.length);
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, [isAutoPlaying, healthTips.length]);
+
+  const fetchHealthTips = async () => {
+    try {
+      const data = await profileAPI.getHealthTips();
+      if (data.success && data.tips) {
+        setHealthTips(data.tips);
+      }
+    } catch (err) {
+      // Use default tips if API fails
+      setHealthTips([
+        { id: 1, title: 'Stay Hydrated', description: 'Drink at least 8 glasses of water daily.', icon: '💧' },
+        { id: 2, title: 'Get Quality Sleep', description: 'Aim for 7-9 hours of sleep each night.', icon: '😴' },
+        { id: 3, title: 'Move Your Body', description: '30 minutes of exercise daily improves health.', icon: '🏃' },
+        { id: 4, title: 'Eat Balanced Meals', description: 'Include fruits, vegetables, and whole grains.', icon: '🥗' },
+        { id: 5, title: 'Practice Mindfulness', description: 'Take 10 minutes daily for meditation.', icon: '🧘' },
+      ]);
+    }
+  };
+
+  const nextTip = () => {
+    setCurrentTipIndex((prev) => (prev + 1) % healthTips.length);
+    setIsAutoPlaying(false);
+  };
+
+  const prevTip = () => {
+    setCurrentTipIndex((prev) => (prev - 1 + healthTips.length) % healthTips.length);
+    setIsAutoPlaying(false);
+  };
+
+  const currentTip = healthTips[currentTipIndex];
 
   return (
     <Layout>
@@ -49,6 +98,61 @@ export default function DashboardPage() {
             Your integrated health co-pilot is ready to assist you. Select a feature below to get started.
           </p>
         </div>
+
+        {/* Health Tips Slideshow */}
+        {healthTips.length > 0 && currentTip && (
+          <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-2xl border border-amber-500/30 overflow-hidden">
+            <div className="flex items-center gap-2 px-6 py-3 bg-amber-500/10 border-b border-amber-500/30">
+              <Lightbulb className="w-5 h-5 text-amber-400" />
+              <span className="font-medium text-amber-400">Health Tip of the Moment</span>
+              <span className="ml-auto text-sm text-amber-400/60">
+                {currentTipIndex + 1} / {healthTips.length}
+              </span>
+            </div>
+            
+            <div className="p-6">
+              <div className="flex items-center gap-6">
+                <button
+                  onClick={prevTip}
+                  className="p-2 rounded-full bg-slate-700/50 text-white hover:bg-slate-600/50 transition-colors flex-shrink-0"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                
+                <div className="flex-1 text-center transition-all duration-300">
+                  <span className="text-4xl mb-3 block">{currentTip.icon}</span>
+                  <h3 className="text-xl font-semibold text-white mb-2">{currentTip.title}</h3>
+                  <p className="text-slate-300">{currentTip.description}</p>
+                </div>
+                
+                <button
+                  onClick={nextTip}
+                  className="p-2 rounded-full bg-slate-700/50 text-white hover:bg-slate-600/50 transition-colors flex-shrink-0"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+              
+              {/* Dots indicator */}
+              <div className="flex justify-center gap-2 mt-4">
+                {healthTips.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      setCurrentTipIndex(index);
+                      setIsAutoPlaying(false);
+                    }}
+                    className={`w-2 h-2 rounded-full transition-all ${
+                      index === currentTipIndex
+                        ? 'bg-amber-400 w-6'
+                        : 'bg-slate-600 hover:bg-slate-500'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Quick Start Info */}
         <div className="flex items-center gap-3 p-4 bg-blue-500/20 rounded-xl border border-blue-500/30">

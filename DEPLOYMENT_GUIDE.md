@@ -83,10 +83,76 @@ CREATE TABLE chat_messages (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Medications table (with inventory tracking)
+CREATE TABLE medications (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) NOT NULL,
+  name TEXT NOT NULL,
+  dosage TEXT NOT NULL,
+  schedule TEXT NOT NULL,
+  reminder_minutes_before INTEGER DEFAULT 15,
+  notes TEXT,
+  inventory_count INTEGER DEFAULT 0,
+  inventory_threshold INTEGER DEFAULT 5,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Medication logs table
+CREATE TABLE medication_logs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  medication_id UUID REFERENCES medications(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id) NOT NULL,
+  taken_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- User profiles table
+CREATE TABLE user_profiles (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) UNIQUE NOT NULL,
+  display_name TEXT,
+  email TEXT,
+  age INTEGER,
+  gender TEXT,
+  height_cm NUMERIC,
+  weight_kg NUMERIC,
+  blood_type TEXT,
+  allergies TEXT,
+  medical_conditions TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- User settings table
+CREATE TABLE user_settings (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) UNIQUE NOT NULL,
+  reminder_settings JSONB DEFAULT '{"default_reminder_minutes": 15, "notifications_enabled": true, "email_reminders": false}'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Screening results table
+CREATE TABLE screening_results (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL,
+  screening_type TEXT NOT NULL,
+  answers JSONB NOT NULL,
+  results JSONB NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Enable Row Level Security
 ALTER TABLE symptom_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chat_conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE medications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE medication_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE screening_results ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for symptom_history
 CREATE POLICY "Users can view own symptom history"
@@ -122,6 +188,31 @@ CREATE POLICY "Users can insert own chat messages"
       SELECT id FROM chat_conversations WHERE user_id = auth.uid()
     )
   );
+
+-- RLS Policies for medications
+CREATE POLICY "Users can view own medications"
+  ON medications FOR ALL
+  USING (auth.uid() = user_id);
+
+-- RLS Policies for medication_logs
+CREATE POLICY "Users can manage own medication logs"
+  ON medication_logs FOR ALL
+  USING (auth.uid() = user_id);
+
+-- RLS Policies for user_profiles
+CREATE POLICY "Users can manage own profile"
+  ON user_profiles FOR ALL
+  USING (auth.uid() = user_id);
+
+-- RLS Policies for user_settings
+CREATE POLICY "Users can manage own settings"
+  ON user_settings FOR ALL
+  USING (auth.uid() = user_id);
+
+-- RLS Policies for screening_results
+CREATE POLICY "Users can manage own screening results"
+  ON screening_results FOR ALL
+  USING (auth.uid()::text = user_id);
 ```
 
 4. Click **"Run"** (or press Ctrl/Cmd + Enter)

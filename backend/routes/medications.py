@@ -14,7 +14,9 @@ from services.medication_manager import (
     get_medication_logs,
     get_due_reminders,
     get_reminder_settings,
-    update_reminder_settings
+    update_reminder_settings,
+    get_low_inventory_alerts,
+    update_inventory
 )
 
 router = APIRouter()
@@ -27,6 +29,8 @@ class MedicationCreate(BaseModel):
     schedule: str
     reminder_minutes_before: Optional[int] = 15
     notes: Optional[str] = ""
+    inventory_count: Optional[int] = 0
+    inventory_threshold: Optional[int] = 5
 
 
 class MedicationUpdate(BaseModel):
@@ -36,6 +40,12 @@ class MedicationUpdate(BaseModel):
     reminder_minutes_before: Optional[int] = None
     notes: Optional[str] = None
     is_active: Optional[bool] = None
+    inventory_count: Optional[int] = None
+    inventory_threshold: Optional[int] = None
+
+
+class InventoryUpdate(BaseModel):
+    count: int
 
 
 class MedicationLogCreate(BaseModel):
@@ -93,7 +103,9 @@ async def create_medication(
         dosage=medication.dosage,
         schedule=medication.schedule,
         reminder_minutes_before=medication.reminder_minutes_before,
-        notes=medication.notes
+        notes=medication.notes,
+        inventory_count=medication.inventory_count,
+        inventory_threshold=medication.inventory_threshold
     )
     
     if result:
@@ -248,3 +260,38 @@ async def update_settings(
         }
     else:
         raise HTTPException(status_code=500, detail="Failed to update settings")
+
+
+@router.get("/inventory/low")
+async def get_low_inventory_route(authorization: Optional[str] = Header(None)):
+    """Get medications with low inventory"""
+    user_id = get_user_id_from_token(authorization)
+    
+    alerts = get_low_inventory_alerts(user_id)
+    
+    return {
+        "success": True,
+        "alerts": alerts,
+        "count": len(alerts)
+    }
+
+
+@router.put("/{medication_id}/inventory")
+async def update_inventory_route(
+    medication_id: str,
+    inventory_data: InventoryUpdate,
+    authorization: Optional[str] = Header(None)
+):
+    """Update inventory count for a medication"""
+    user_id = get_user_id_from_token(authorization)
+    
+    result = update_inventory(medication_id, user_id, inventory_data.count)
+    
+    if result:
+        return {
+            "success": True,
+            "medication": result,
+            "message": f"Inventory updated to {inventory_data.count}"
+        }
+    else:
+        raise HTTPException(status_code=404, detail="Medication not found or update failed")

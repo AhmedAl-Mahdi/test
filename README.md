@@ -1,6 +1,6 @@
 # Care-AI: Your Integrated Health Co-Pilot
 
-Care-AI is a modern web application that combines AI-powered health tools to help users manage their wellbeing. It includes symptom analysis, mental health support, diagnostic imaging capabilities, and medication tracking.
+Care-AI is a modern web application that combines AI-powered health tools to help users manage their wellbeing. It includes symptom analysis, health screening questionnaires, mental health support, diagnostic imaging capabilities, medication tracking with inventory management, and personalized health tips.
 
 ![Care-AI Dashboard](https://via.placeholder.com/800x400?text=Care-AI+Dashboard)
 
@@ -11,6 +11,12 @@ Care-AI is a modern web application that combines AI-powered health tools to hel
 - Provides potential conditions with probability scores
 - Suggests appropriate next steps (Self-Care, Consult a Doctor, or Immediate Care)
 - Saves analysis history for future reference
+
+### 📋 Health Screening
+- Questionnaire-based health assessments
+- Available screenings: General Health, Mental Wellness, Lifestyle Assessment
+- Personalized tips and advice based on your answers
+- Score-based results with actionable recommendations
 
 ### 🧠 MindWell Chatbot
 - Empathetic AI companion for mental health support
@@ -30,9 +36,23 @@ Care-AI is a modern web application that combines AI-powered health tools to hel
 ### 💊 Medication Manager
 - Add and track medications with name, dosage, and schedule
 - Customizable reminder timing (5, 10, 15, 30, or 60 minutes before dose)
-- Log when you take each dose
+- **Inventory tracking** with stock count and low-stock alerts
+- Set custom thresholds for low inventory warnings
+- Log when you take each dose (automatically decrements inventory)
 - View upcoming reminders for due medications
 - Personal settings for notification preferences
+
+### 👤 User Profile
+- Manage personal information (name, email, age, gender)
+- Health metrics (height, weight, blood type)
+- BMI calculator with category display
+- Medical conditions and allergies tracking
+- Privacy-focused secure storage
+
+### 💡 Personalized Health Tips
+- Dashboard slideshow with health tips
+- Tips personalized based on your profile data
+- Auto-rotating carousel with manual navigation
 
 ### 🔔 Notifications
 - Real-time alerts and reminders

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Search, History, AlertCircle, CheckCircle, AlertTriangle, Home as HomeIcon, Loader2 } from 'lucide-react';
+import { Search, History, AlertCircle, CheckCircle, AlertTriangle, Home as HomeIcon, Loader2, ClipboardList, ArrowRight, ChevronRight } from 'lucide-react';
 import Layout from '../components/Layout';
-import { symptomsAPI } from '../utils/api';
+import { symptomsAPI, screeningAPI } from '../utils/api';
 
 export default function SymptomsPage() {
   const [activeTab, setActiveTab] = useState('check');
@@ -11,10 +11,20 @@ export default function SymptomsPage() {
   const [error, setError] = useState('');
   const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  
+  // Screening state
+  const [questionnaires, setQuestionnaires] = useState([]);
+  const [selectedQuestionnaire, setSelectedQuestionnaire] = useState(null);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [screeningAnswers, setScreeningAnswers] = useState({});
+  const [screeningResult, setScreeningResult] = useState(null);
+  const [screeningLoading, setScreeningLoading] = useState(false);
 
   useEffect(() => {
     if (activeTab === 'history') {
       fetchHistory();
+    } else if (activeTab === 'screening') {
+      fetchQuestionnaires();
     }
   }, [activeTab]);
 
@@ -30,6 +40,71 @@ export default function SymptomsPage() {
     } finally {
       setHistoryLoading(false);
     }
+  };
+
+  const fetchQuestionnaires = async () => {
+    try {
+      const data = await screeningAPI.getQuestionnaires();
+      if (data.success) {
+        setQuestionnaires(data.questionnaires);
+      }
+    } catch (err) {
+      console.error('Error fetching questionnaires:', err);
+      // Use fallback questionnaires
+      setQuestionnaires([
+        { id: 'general_health', title: 'General Health Screening', description: 'Assess your overall health habits', question_count: 5 },
+        { id: 'mental_wellness', title: 'Mental Wellness Check', description: 'Evaluate your mental wellbeing', question_count: 5 },
+        { id: 'lifestyle', title: 'Lifestyle Assessment', description: 'Review your daily habits', question_count: 5 }
+      ]);
+    }
+  };
+
+  const startScreening = async (questionnaireId) => {
+    try {
+      const data = await screeningAPI.getQuestionnaire(questionnaireId);
+      if (data.success) {
+        setSelectedQuestionnaire(data.questionnaire);
+        setCurrentQuestion(0);
+        setScreeningAnswers({});
+        setScreeningResult(null);
+      }
+    } catch (err) {
+      console.error('Error loading questionnaire:', err);
+    }
+  };
+
+  const handleScreeningAnswer = (questionId, answer) => {
+    setScreeningAnswers({ ...screeningAnswers, [questionId]: answer });
+  };
+
+  const submitScreening = async () => {
+    setScreeningLoading(true);
+    try {
+      const answers = Object.entries(screeningAnswers).map(([question_id, answer]) => ({
+        question_id,
+        answer
+      }));
+      
+      const data = await screeningAPI.submit(
+        questionnaires.find(q => q.title === selectedQuestionnaire.title)?.id || 'general_health',
+        answers
+      );
+      
+      if (data.success) {
+        setScreeningResult(data.results);
+      }
+    } catch (err) {
+      console.error('Error submitting screening:', err);
+    } finally {
+      setScreeningLoading(false);
+    }
+  };
+
+  const resetScreening = () => {
+    setSelectedQuestionnaire(null);
+    setCurrentQuestion(0);
+    setScreeningAnswers({});
+    setScreeningResult(null);
   };
 
   const handleSubmit = async (e) => {
@@ -106,6 +181,17 @@ export default function SymptomsPage() {
           >
             <Search className="w-4 h-4" />
             Check Symptoms
+          </button>
+          <button
+            onClick={() => setActiveTab('screening')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+              activeTab === 'screening'
+                ? 'bg-emerald-500 text-white'
+                : 'text-slate-300 hover:text-white'
+            }`}
+          >
+            <ClipboardList className="w-4 h-4" />
+            Health Screening
           </button>
           <button
             onClick={() => setActiveTab('history')}
@@ -280,6 +366,211 @@ export default function SymptomsPage() {
                   </details>
                 );
               })
+            )}
+          </div>
+        )}
+
+        {/* Screening Tab */}
+        {activeTab === 'screening' && (
+          <div className="space-y-6">
+            {!selectedQuestionnaire && !screeningResult && (
+              <>
+                <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+                  <h2 className="text-lg font-semibold text-white mb-2">Health Screening Questionnaires</h2>
+                  <p className="text-slate-400 mb-6">
+                    Answer a few questions to get personalized health tips and recommendations.
+                  </p>
+                  
+                  <div className="grid md:grid-cols-3 gap-4">
+                    {questionnaires.map((q) => (
+                      <button
+                        key={q.id}
+                        onClick={() => startScreening(q.id)}
+                        className="p-4 bg-slate-700/50 rounded-xl border border-slate-600 hover:border-emerald-500/50 transition-all text-left group"
+                      >
+                        <h3 className="font-medium text-white group-hover:text-emerald-400">{q.title}</h3>
+                        <p className="text-sm text-slate-400 mt-1">{q.description}</p>
+                        <p className="text-xs text-slate-500 mt-2">{q.question_count} questions</p>
+                        <div className="flex items-center text-emerald-400 mt-3 text-sm">
+                          <span>Start</span>
+                          <ChevronRight className="w-4 h-4 ml-1" />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {selectedQuestionnaire && !screeningResult && (
+              <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-lg font-semibold text-white">{selectedQuestionnaire.title}</h2>
+                  <button
+                    onClick={resetScreening}
+                    className="text-slate-400 hover:text-white text-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+                
+                {/* Progress bar */}
+                <div className="mb-6">
+                  <div className="flex justify-between text-sm text-slate-400 mb-2">
+                    <span>Question {currentQuestion + 1} of {selectedQuestionnaire.questions.length}</span>
+                    <span>{Math.round(((currentQuestion + 1) / selectedQuestionnaire.questions.length) * 100)}%</span>
+                  </div>
+                  <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-emerald-500 transition-all duration-300"
+                      style={{ width: `${((currentQuestion + 1) / selectedQuestionnaire.questions.length) * 100}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Current Question */}
+                <div className="mb-6">
+                  <p className="text-lg text-white mb-4">
+                    {selectedQuestionnaire.questions[currentQuestion].text}
+                  </p>
+                  
+                  <div className="space-y-2">
+                    {selectedQuestionnaire.questions[currentQuestion].options.map((option) => (
+                      <button
+                        key={option}
+                        onClick={() => handleScreeningAnswer(selectedQuestionnaire.questions[currentQuestion].id, option)}
+                        className={`w-full p-3 rounded-lg border text-left transition-all ${
+                          screeningAnswers[selectedQuestionnaire.questions[currentQuestion].id] === option
+                            ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
+                            : 'bg-slate-700/50 border-slate-600 text-white hover:border-slate-500'
+                        }`}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Navigation */}
+                <div className="flex gap-3">
+                  {currentQuestion > 0 && (
+                    <button
+                      onClick={() => setCurrentQuestion(currentQuestion - 1)}
+                      className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600"
+                    >
+                      Previous
+                    </button>
+                  )}
+                  
+                  {currentQuestion < selectedQuestionnaire.questions.length - 1 ? (
+                    <button
+                      onClick={() => setCurrentQuestion(currentQuestion + 1)}
+                      disabled={!screeningAnswers[selectedQuestionnaire.questions[currentQuestion].id]}
+                      className="flex-1 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+                  ) : (
+                    <button
+                      onClick={submitScreening}
+                      disabled={!screeningAnswers[selectedQuestionnaire.questions[currentQuestion].id] || screeningLoading}
+                      className="flex-1 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {screeningLoading ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          Analyzing...
+                        </>
+                      ) : (
+                        'Get Results'
+                      )}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Screening Results */}
+            {screeningResult && (
+              <div className="space-y-6 animate-fadeIn">
+                <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold text-white">Your Results</h2>
+                    <button
+                      onClick={resetScreening}
+                      className="text-emerald-400 hover:text-emerald-300 text-sm"
+                    >
+                      Take Another
+                    </button>
+                  </div>
+                  
+                  {/* Score */}
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="text-4xl font-bold text-emerald-400">
+                      {screeningResult.score}/{screeningResult.max_score}
+                    </div>
+                    <div>
+                      <p className={`font-medium ${
+                        screeningResult.category === 'Excellent' || screeningResult.category === 'Good' || screeningResult.category === 'Healthy Lifestyle'
+                          ? 'text-emerald-400'
+                          : screeningResult.category === 'Needs Improvement' || screeningResult.category === 'Seek Support'
+                          ? 'text-red-400'
+                          : 'text-yellow-400'
+                      }`}>
+                        {screeningResult.category}
+                      </p>
+                      <p className="text-slate-400 text-sm">{screeningResult.summary}</p>
+                    </div>
+                  </div>
+
+                  {/* Score Bar */}
+                  <div className="h-3 bg-slate-700 rounded-full overflow-hidden mb-6">
+                    <div 
+                      className={`h-full transition-all duration-500 ${
+                        (screeningResult.score / screeningResult.max_score) >= 0.8
+                          ? 'bg-emerald-500'
+                          : (screeningResult.score / screeningResult.max_score) >= 0.5
+                          ? 'bg-yellow-500'
+                          : 'bg-red-500'
+                      }`}
+                      style={{ width: `${(screeningResult.score / screeningResult.max_score) * 100}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Tips and Recommendations */}
+                {screeningResult.tips && screeningResult.tips.length > 0 && (
+                  <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl p-6 border border-blue-500/30">
+                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5 text-blue-400" />
+                      Personalized Tips & Advice
+                    </h3>
+                    <div className="space-y-3">
+                      {screeningResult.tips.map((tip, index) => (
+                        <div key={index} className="flex items-start gap-3">
+                          <div className="w-6 h-6 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span className="text-blue-400 text-sm">{index + 1}</span>
+                          </div>
+                          <p className="text-slate-300">{tip}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Urgent Recommendations */}
+                {screeningResult.recommendations && screeningResult.recommendations.length > 0 && (
+                  <div className="bg-red-500/20 rounded-xl p-6 border border-red-500/30">
+                    <h3 className="text-lg font-semibold text-red-400 mb-4 flex items-center gap-2">
+                      <AlertCircle className="w-5 h-5" />
+                      Important Recommendations
+                    </h3>
+                    {screeningResult.recommendations.map((rec, index) => (
+                      <p key={index} className="text-slate-300">{rec.message}</p>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
           </div>
         )}
