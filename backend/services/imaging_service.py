@@ -11,6 +11,9 @@ from typing import Optional, Dict, Any
 # Cache for loaded models
 _model_cache: Dict[str, ort.InferenceSession] = {}
 
+# HuggingFace repository for models (configurable via environment)
+HF_REPO_ID = os.getenv("HF_MODEL_REPO", "aaburakhia/Pneumonia-Detector-CareAI")
+
 
 def load_model(model_filename: str) -> Optional[ort.InferenceSession]:
     """
@@ -20,14 +23,13 @@ def load_model(model_filename: str) -> Optional[ort.InferenceSession]:
     if model_filename in _model_cache:
         return _model_cache[model_filename]
     
-    repo_id = "aaburakhia/Pneumonia-Detector-CareAI"
     local_dir = "models"
     os.makedirs(local_dir, exist_ok=True)
     model_path = os.path.join(local_dir, model_filename)
     
     if not os.path.exists(model_path):
         try:
-            hf_hub_download(repo_id=repo_id, filename=model_filename, local_dir=local_dir)
+            hf_hub_download(repo_id=HF_REPO_ID, filename=model_filename, local_dir=local_dir)
         except Exception as e:
             print(f"Error downloading model '{model_filename}': {e}")
             return None
