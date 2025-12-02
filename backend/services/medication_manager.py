@@ -60,19 +60,24 @@ def add_medication(
             "dosage": dosage,
             "schedule": schedule,
             "reminder_minutes_before": reminder_minutes_before,
-            "notes": notes,
-            "inventory_count": inventory_count,
-            "inventory_threshold": inventory_threshold,
+            "notes": notes if notes else "",
+            "inventory_count": inventory_count if inventory_count else 0,
+            "inventory_threshold": inventory_threshold if inventory_threshold else 5,
             "is_active": True
         }
         
+        print(f"Adding medication for user {user_id}: {medication_data}")
         response = supabase.table('medications').insert(medication_data).execute()
+        print(f"Medication insert response: {response}")
         
         if response.data and len(response.data) > 0:
             return response.data[0]
+        print(f"No data returned from insert")
         return None
     except Exception as e:
         print(f"Error adding medication: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 

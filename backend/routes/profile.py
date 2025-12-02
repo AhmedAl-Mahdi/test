@@ -112,12 +112,19 @@ async def update_profile(
     try:
         supabase = get_supabase_client()
         
-        # Prepare update data
-        update_data = {k: v for k, v in profile.dict().items() if v is not None}
+        # Prepare update data - include all fields even if None to support clearing values
+        update_data = profile.dict()
         update_data['user_id'] = user_id
         
-        # Upsert the profile
-        response = supabase.table('user_profiles').upsert(update_data).execute()
+        # First check if profile exists
+        existing = supabase.table('user_profiles').select('id').eq('user_id', user_id).execute()
+        
+        if existing.data and len(existing.data) > 0:
+            # Update existing profile
+            response = supabase.table('user_profiles').update(update_data).eq('user_id', user_id).execute()
+        else:
+            # Insert new profile
+            response = supabase.table('user_profiles').insert(update_data).execute()
         
         if response.data:
             return {
@@ -128,6 +135,8 @@ async def update_profile(
         else:
             raise HTTPException(status_code=500, detail="Failed to update profile")
             
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error updating profile: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to update profile: {str(e)}")

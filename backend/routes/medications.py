@@ -101,25 +101,36 @@ async def create_medication(
     """Add a new medication"""
     user_id = get_user_id_from_token(authorization)
     
-    result = add_medication(
-        user_id=user_id,
-        name=medication.name,
-        dosage=medication.dosage,
-        schedule=medication.schedule,
-        reminder_minutes_before=medication.reminder_minutes_before,
-        notes=medication.notes,
-        inventory_count=medication.inventory_count,
-        inventory_threshold=medication.inventory_threshold
-    )
+    print(f"Creating medication for user: {user_id}")
+    print(f"Medication data: {medication.dict()}")
     
-    if result:
-        return {
-            "success": True,
-            "medication": result,
-            "message": f"Medication '{medication.name}' added successfully"
-        }
-    else:
-        raise HTTPException(status_code=500, detail="Failed to add medication")
+    try:
+        result = add_medication(
+            user_id=user_id,
+            name=medication.name,
+            dosage=medication.dosage,
+            schedule=medication.schedule,
+            reminder_minutes_before=medication.reminder_minutes_before or 15,
+            notes=medication.notes or "",
+            inventory_count=medication.inventory_count or 0,
+            inventory_threshold=medication.inventory_threshold or 5
+        )
+        
+        if result:
+            return {
+                "success": True,
+                "medication": result,
+                "message": f"Medication '{medication.name}' added successfully"
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to add medication - no result returned")
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Exception adding medication: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Failed to add medication: {str(e)}")
 
 
 @router.put("/{medication_id}")
