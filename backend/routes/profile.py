@@ -33,11 +33,22 @@ class ProfileUpdate(BaseModel):
 
 
 def get_user_id_from_token(authorization: str) -> str:
-    """Extract user ID from authorization token."""
+    """Extract user ID from authorization token using Supabase."""
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Not authenticated")
+    
     token = authorization.replace("Bearer ", "")
-    return "demo-user-id"
+    
+    try:
+        supabase = get_supabase_client()
+        result = supabase.auth.get_user(token)
+        
+        if result.user:
+            return result.user.id
+        else:
+            raise HTTPException(status_code=401, detail="Invalid token")
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Authentication failed: {str(e)}")
 
 
 @router.get("/")

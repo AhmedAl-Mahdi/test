@@ -60,20 +60,23 @@ class ReminderSettingsUpdate(BaseModel):
 
 def get_user_id_from_token(authorization: str) -> str:
     """
-    Extract user ID from authorization token.
-    In a real implementation, this would validate the JWT and extract the user ID.
-    For now, we use a placeholder that should be replaced with proper auth.
+    Extract user ID from authorization token using Supabase.
     """
-    # This is a simplified version - in production, validate the JWT properly
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Not authenticated")
     
-    # For demo purposes, we'll extract from the token
-    # In production, decode and validate the JWT
     token = authorization.replace("Bearer ", "")
-    # Placeholder: return a demo user ID
-    # In production, decode the token to get the actual user ID
-    return "demo-user-id"
+    
+    try:
+        supabase = get_supabase_client()
+        result = supabase.auth.get_user(token)
+        
+        if result.user:
+            return result.user.id
+        else:
+            raise HTTPException(status_code=401, detail="Invalid token")
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Authentication failed: {str(e)}")
 
 
 @router.get("/")
