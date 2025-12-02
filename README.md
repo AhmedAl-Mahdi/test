@@ -1,6 +1,6 @@
 # Care-AI: Your Integrated Health Co-Pilot
 
-Care-AI is a modern web application that combines AI-powered health tools to help users manage their wellbeing. It includes symptom analysis, mental health support, and diagnostic imaging capabilities.
+Care-AI is a modern web application that combines AI-powered health tools to help users manage their wellbeing. It includes symptom analysis, mental health support, diagnostic imaging capabilities, and medication tracking.
 
 ![Care-AI Dashboard](https://via.placeholder.com/800x400?text=Care-AI+Dashboard)
 
@@ -26,6 +26,13 @@ Care-AI is a modern web application that combines AI-powered health tools to hel
   - CT scans for kidney cancer detection
   - MRI scans for brain tumor detection
 - Demo mode with sample images
+
+### 💊 Medication Manager
+- Add and track medications with name, dosage, and schedule
+- Customizable reminder timing (5, 10, 15, 30, or 60 minutes before dose)
+- Log when you take each dose
+- View upcoming reminders for due medications
+- Personal settings for notification preferences
 
 ### 🔔 Notifications
 - Real-time alerts and reminders
@@ -180,6 +187,82 @@ CREATE POLICY "Users can insert own chat messages"
       SELECT id FROM chat_conversations WHERE user_id = auth.uid()
     )
   );
+
+-- Medications table
+CREATE TABLE medications (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) NOT NULL,
+  name TEXT NOT NULL,
+  dosage TEXT NOT NULL,
+  schedule TEXT NOT NULL,
+  reminder_minutes_before INTEGER DEFAULT 15,
+  notes TEXT,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Medication logs table (tracks when doses are taken)
+CREATE TABLE medication_logs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  medication_id UUID REFERENCES medications(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id) NOT NULL,
+  taken_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- User settings table (for reminder preferences)
+CREATE TABLE user_settings (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) UNIQUE NOT NULL,
+  reminder_settings JSONB DEFAULT '{"default_reminder_minutes": 15, "notifications_enabled": true, "email_reminders": false}'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable RLS for new tables
+ALTER TABLE medications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE medication_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_settings ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies for medications
+CREATE POLICY "Users can view own medications"
+  ON medications FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own medications"
+  ON medications FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own medications"
+  ON medications FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own medications"
+  ON medications FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- RLS Policies for medication_logs
+CREATE POLICY "Users can view own medication logs"
+  ON medication_logs FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own medication logs"
+  ON medication_logs FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+-- RLS Policies for user_settings
+CREATE POLICY "Users can view own settings"
+  ON user_settings FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own settings"
+  ON user_settings FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own settings"
+  ON user_settings FOR UPDATE
+  USING (auth.uid() = user_id);
 ```
 
 3. Get your project URL and keys from **Settings > API**

@@ -73,12 +73,36 @@ export default function ImagingPage() {
     }
   };
 
+  // Map demo types to actual image file names
+  const getDemoImagePath = (scanType, demoType) => {
+    const imageMap = {
+      pneumonia: {
+        normal: '/demo_images/normal_1.jpeg',
+        pneumonia: '/demo_images/pneumonia_1.jpeg',
+      },
+      breast: {
+        benign: '/demo_images/bc_benign_1.jpeg',
+        malignant: '/demo_images/bc_malignant_1.jpeg',
+      },
+      kidney: {
+        normal: '/demo_images/kidney_normal.jpg',
+        tumor: '/demo_images/kidney_tumor.jpg',
+      },
+      brain: {
+        tumor: '/demo_images/brain_tumor.jpg',
+        glioma: '/demo_images/brain_glioma.jpg',
+        meningioma: '/demo_images/brain_meningioma.jpg',
+      },
+    };
+    return imageMap[scanType]?.[demoType] || '/demo_images/normal_1.jpeg';
+  };
+
   const loadDemo = (type) => {
     setDemoMode(true);
     setDemoType(type);
     setSelectedFile(null);
-    // Use placeholder image for demo
-    setPreview(`/demo_images/${activeTab}_${type}.jpg`);
+    // Use mapped image path for demo
+    setPreview(getDemoImagePath(activeTab, type));
     setResult(null);
   };
 

@@ -7,7 +7,8 @@ import {
   Home, 
   LogOut, 
   Menu, 
-  X 
+  X,
+  Pill 
 } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import NotificationBell from './NotificationBell';
@@ -17,6 +18,7 @@ const navItems = [
   { path: '/symptoms', label: 'Symptom Checker', icon: Stethoscope },
   { path: '/mindwell', label: 'MindWell', icon: Brain },
   { path: '/imaging', label: 'Diagnostic Imaging', icon: ImagePlus },
+  { path: '/medications', label: 'Medications', icon: Pill },
 ];
 
 export default function Layout({ children }) {

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Stethoscope, Brain, ImagePlus, ArrowRight, Heart } from 'lucide-react';
+import { Stethoscope, Brain, ImagePlus, ArrowRight, Heart, Pill } from 'lucide-react';
 import { useAuth } from '../components/AuthContext';
 import Layout from '../components/Layout';
 
@@ -24,6 +24,13 @@ const features = [
     description: 'Analyze medical images for pneumonia, breast cancer, kidney cancer, and brain tumors.',
     path: '/imaging',
     color: 'bg-emerald-500',
+  },
+  {
+    icon: Pill,
+    title: 'Medication Manager',
+    description: 'Track your medications, dosages, and schedules. Get reminders for when to take your doses.',
+    path: '/medications',
+    color: 'bg-pink-500',
   },
 ];
 
@@ -54,7 +61,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Features Grid */}
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {features.map((feature) => {
             const Icon = feature.icon;
             return (

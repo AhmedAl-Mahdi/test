@@ -210,3 +210,58 @@ export const notificationsAPI = {
     });
   },
 };
+
+/**
+ * Medications API methods
+ */
+export const medicationsAPI = {
+  async getAll() {
+    return apiRequest('/medications/');
+  },
+
+  async add(medication) {
+    return apiRequest('/medications/', {
+      method: 'POST',
+      body: JSON.stringify(medication),
+    });
+  },
+
+  async update(medicationId, updates) {
+    return apiRequest(`/medications/${medicationId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+  },
+
+  async delete(medicationId) {
+    return apiRequest(`/medications/${medicationId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  async logDose(medicationId, takenAt = null) {
+    return apiRequest(`/medications/${medicationId}/log`, {
+      method: 'POST',
+      body: JSON.stringify({ taken_at: takenAt }),
+    });
+  },
+
+  async getLogs(medicationId, days = 7) {
+    return apiRequest(`/medications/${medicationId}/logs?days=${days}`);
+  },
+
+  async getDueReminders() {
+    return apiRequest('/medications/reminders/due');
+  },
+
+  async getSettings() {
+    return apiRequest('/medications/settings/reminders');
+  },
+
+  async updateSettings(settings) {
+    return apiRequest('/medications/settings/reminders', {
+      method: 'PUT',
+      body: JSON.stringify(settings),
+    });
+  },
+};
