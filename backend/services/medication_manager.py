@@ -54,31 +54,38 @@ def add_medication(
     try:
         supabase = get_supabase_client()
         
+        # Use string user_id directly - Supabase will handle the conversion
         medication_data = {
             "user_id": user_id,
             "name": name,
             "dosage": dosage,
             "schedule": schedule,
-            "reminder_minutes_before": reminder_minutes_before,
+            "reminder_minutes_before": reminder_minutes_before if reminder_minutes_before else 15,
             "notes": notes if notes else "",
             "inventory_count": inventory_count if inventory_count else 0,
             "inventory_threshold": inventory_threshold if inventory_threshold else 5,
-            "is_active": True
+            "is_active": True,
+            "created_at": datetime.utcnow().isoformat()
         }
         
-        print(f"Adding medication for user {user_id}: {medication_data}")
+        print(f"[medication_manager] Adding medication for user {user_id}")
+        print(f"[medication_manager] Data: {json.dumps(medication_data, default=str)}")
+        
         response = supabase.table('medications').insert(medication_data).execute()
-        print(f"Medication insert response: {response}")
+        
+        print(f"[medication_manager] Response data: {response.data}")
         
         if response.data and len(response.data) > 0:
+            print(f"[medication_manager] Successfully added medication: {response.data[0]}")
             return response.data[0]
-        print(f"No data returned from insert")
+        
+        print(f"[medication_manager] No data returned from insert")
         return None
     except Exception as e:
-        print(f"Error adding medication: {e}")
+        print(f"[medication_manager] Error adding medication: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
-        return None
+        raise e
 
 
 def update_medication(

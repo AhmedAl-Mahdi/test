@@ -211,22 +211,40 @@ CREATE POLICY "Users can insert own chat messages"
 -- Medications table
 CREATE TABLE medications (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) NOT NULL,
+  user_id UUID NOT NULL,
   name TEXT NOT NULL,
   dosage TEXT NOT NULL,
   schedule TEXT NOT NULL,
   reminder_minutes_before INTEGER DEFAULT 15,
   notes TEXT,
+  inventory_count INTEGER DEFAULT 0,
+  inventory_threshold INTEGER DEFAULT 5,
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- User profiles table
+CREATE TABLE user_profiles (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID UNIQUE NOT NULL,
+  display_name TEXT,
+  email TEXT,
+  age INTEGER,
+  gender TEXT,
+  height_cm NUMERIC,
+  weight_kg NUMERIC,
+  blood_type TEXT,
+  allergies TEXT,
+  medical_conditions TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Medication logs table (tracks when doses are taken)
 CREATE TABLE medication_logs (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   medication_id UUID REFERENCES medications(id) ON DELETE CASCADE,
-  user_id UUID REFERENCES auth.users(id) NOT NULL,
+  user_id UUID NOT NULL,
   taken_at TIMESTAMPTZ NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -234,7 +252,7 @@ CREATE TABLE medication_logs (
 -- User settings table (for reminder preferences)
 CREATE TABLE user_settings (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) UNIQUE NOT NULL,
+  user_id UUID UNIQUE NOT NULL,
   reminder_settings JSONB DEFAULT '{"default_reminder_minutes": 15, "notifications_enabled": true, "email_reminders": false}'::jsonb,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -244,6 +262,7 @@ CREATE TABLE user_settings (
 ALTER TABLE medications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE medication_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for medications
 CREATE POLICY "Users can view own medications"
@@ -283,6 +302,28 @@ CREATE POLICY "Users can insert own settings"
 CREATE POLICY "Users can update own settings"
   ON user_settings FOR UPDATE
   USING (auth.uid() = user_id);
+
+-- RLS Policies for user_profiles
+CREATE POLICY "Users can view own profile"
+  ON user_profiles FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own profile"
+  ON user_profiles FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own profile"
+  ON user_profiles FOR UPDATE
+  USING (auth.uid() = user_id);
+```
+
+**⚠️ IMPORTANT NOTE:** If the backend uses the Supabase **Service Role Key** (not the anon key), it bypasses RLS. However, to be safe, you can also disable RLS temporarily for testing:
+
+```sql
+-- ONLY FOR TESTING - Disable RLS (remove these after testing works)
+ALTER TABLE medications DISABLE ROW LEVEL SECURITY;
+ALTER TABLE user_profiles DISABLE ROW LEVEL SECURITY;
+ALTER TABLE user_settings DISABLE ROW LEVEL SECURITY;
 ```
 
 3. Get your project URL and keys from **Settings > API**

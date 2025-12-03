@@ -4,6 +4,7 @@ User profile routes for managing user information
 from fastapi import APIRouter, HTTPException, Header
 from pydantic import BaseModel
 from typing import Optional
+from datetime import datetime
 from services.supabase_service import get_supabase_client
 
 router = APIRouter()
@@ -112,33 +113,49 @@ async def update_profile(
     try:
         supabase = get_supabase_client()
         
-        # Prepare update data - include all fields even if None to support clearing values
-        update_data = profile.dict()
+        # Prepare update data - only include non-None values for update
+        update_data = {k: v for k, v in profile.dict().items() if v is not None}
         update_data['user_id'] = user_id
         
-        # First check if profile exists
-        existing = supabase.table('user_profiles').select('id').eq('user_id', user_id).execute()
+        print(f"[profile] Updating profile for user {user_id}")
+        print(f"[profile] Data: {update_data}")
         
-        if existing.data and len(existing.data) > 0:
-            # Update existing profile
-            response = supabase.table('user_profiles').update(update_data).eq('user_id', user_id).execute()
+        # First check if profile exists
+        try:
+            existing = supabase.table('user_profiles').select('id').eq('user_id', user_id).execute()
+            has_existing = existing.data and len(existing.data) > 0
+        except Exception as check_err:
+            print(f"[profile] Error checking existing profile: {check_err}")
+            has_existing = False
+        
+        if has_existing:
+            # Update existing profile - remove user_id from update since it's used in the where clause
+            update_fields = {k: v for k, v in update_data.items() if k != 'user_id'}
+            print(f"[profile] Updating existing profile with: {update_fields}")
+            response = supabase.table('user_profiles').update(update_fields).eq('user_id', user_id).execute()
         else:
             # Insert new profile
+            update_data['created_at'] = datetime.utcnow().isoformat()
+            print(f"[profile] Inserting new profile with: {update_data}")
             response = supabase.table('user_profiles').insert(update_data).execute()
         
-        if response.data:
+        print(f"[profile] Response: {response.data}")
+        
+        if response.data and len(response.data) > 0:
             return {
                 "success": True,
                 "profile": response.data[0],
                 "message": "Profile updated successfully"
             }
         else:
-            raise HTTPException(status_code=500, detail="Failed to update profile")
+            raise HTTPException(status_code=500, detail="Failed to update profile - no data returned")
             
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error updating profile: {e}")
+        print(f"[profile] Error updating profile: {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Failed to update profile: {str(e)}")
 
 
