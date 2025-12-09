@@ -2,7 +2,7 @@
 
 Care-AI is a modern web application that combines AI-powered health tools to help users manage their wellbeing. It includes symptom analysis, health screening questionnaires, mental health support, diagnostic imaging capabilities, medication tracking with inventory management, and personalized health tips.
 
-![Care-AI Dashboard](https://via.placeholder.com/800x400?text=Care-AI+Dashboard)
+![Care-AI Dashboard](https://care-ai-frontend.onrender.com/dashboard)
 
 ## Features
 
