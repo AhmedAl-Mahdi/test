@@ -226,7 +226,7 @@ with br_tab:
         st.markdown("<h5 style='text-align: center; color: grey;'>or</h5>", unsafe_allow_html=True)
         if st.button("Load Glioma (Demo)", use_container_width=True, key="br_d1"): st.session_state.br_img = Image.open("demo_images/brain_glioma.jpg"); st.session_state.br_cap = "Demo - Glioma"
         if st.button("Load Meningioma (Demo)", use_container_width=True, key="br_d2"): st.session_state.br_img = Image.open("demo_images/brain_meningioma.jpg"); st.session_state.br_cap = "Demo - Meningioma"
-        if st.button("Load Pituitary (Demo)", use_container_width=True, key="br_d3"): st.session_state.br_img = Image.open("demo_images/brain_pituitary.jpg"); st.session_state.br_cap = "Demo - Pituitary"
+        if st.button("Load Pituitary (Demo)", use_container_width=True, key="br_d3"): st.session_state.br_img = Image.open("demo_images/brain_tumor.jpg"); st.session_state.br_cap = "Demo - Pituitary"
     with col2:
         st.markdown("#### Analyze & Review")
         img_show = None

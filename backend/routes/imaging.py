@@ -9,7 +9,12 @@ from services.imaging_service import (
     analyze_pneumonia,
     analyze_breast_cancer,
     analyze_kidney_cancer,
-    analyze_brain_cancer
+    analyze_brain_cancer,
+    analyze_colon_cancer,
+    analyze_lung_cancer,
+    analyze_cervical_cancer,
+    analyze_lymphoma,
+    analyze_oral_cancer
 )
 
 router = APIRouter()
@@ -143,9 +148,10 @@ async def analyze_brain_cancer_image(
     """Analyze an MRI for brain cancer"""
     if is_demo:
         demo_results = {
-            "tumor": ("General Tumor Detected", 98.50),
-            "glioma": ("Glioma Tumor Detected", 97.82),
-            "meningioma": ("Meningioma Tumor Detected", 98.24)
+            "tumor": ("Pituitary Tumor", 98.50),
+            "glioma": ("Glioma Tumor", 97.82),
+            "meningioma": ("Meningioma Tumor", 98.24),
+            "pituitary": ("Pituitary Tumor", 98.50)
         }
         finding, confidence = demo_results.get(demo_type, ("Tumor Detected", 95.0))
         return ImagingAnalysisResponse(
@@ -158,6 +164,200 @@ async def analyze_brain_cancer_image(
         contents = await file.read()
         image = Image.open(io.BytesIO(contents))
         result = analyze_brain_cancer(image)
+        
+        return ImagingAnalysisResponse(
+            success=result["success"],
+            finding=result.get("finding"),
+            confidence=result.get("confidence"),
+            error=result.get("error")
+        )
+    except Exception as e:
+        return ImagingAnalysisResponse(
+            success=False,
+            error=str(e)
+        )
+
+
+@router.post("/analyze/colon-cancer", response_model=ImagingAnalysisResponse)
+async def analyze_colon_cancer_image(
+    file: UploadFile = File(...),
+    is_demo: bool = Form(False),
+    demo_type: str = Form(None)
+):
+    """Analyze histopathology for colon cancer"""
+    if is_demo:
+        if demo_type == "benign":
+            return ImagingAnalysisResponse(
+                success=True,
+                finding="Benign Tissue Detected",
+                confidence=98.90
+            )
+        else:
+            return ImagingAnalysisResponse(
+                success=True,
+                finding="Adenocarcinoma Detected",
+                confidence=97.45
+            )
+    
+    try:
+        contents = await file.read()
+        image = Image.open(io.BytesIO(contents))
+        result = analyze_colon_cancer(image)
+        
+        return ImagingAnalysisResponse(
+            success=result["success"],
+            finding=result.get("finding"),
+            confidence=result.get("confidence"),
+            error=result.get("error")
+        )
+    except Exception as e:
+        return ImagingAnalysisResponse(
+            success=False,
+            error=str(e)
+        )
+
+
+@router.post("/analyze/lung-cancer", response_model=ImagingAnalysisResponse)
+async def analyze_lung_cancer_image(
+    file: UploadFile = File(...),
+    is_demo: bool = Form(False),
+    demo_type: str = Form(None)
+):
+    """Analyze histopathology for lung cancer"""
+    if is_demo:
+        demo_results = {
+            "benign": ("Lung Benign Tissue", 99.10),
+            "adenocarcinoma": ("Lung Adenocarcinoma", 98.33),
+            "squamous": ("Lung Squamous Cell Carcinoma", 97.88)
+        }
+        finding, confidence = demo_results.get(demo_type, ("Lung Benign Tissue", 95.0))
+        return ImagingAnalysisResponse(
+            success=True,
+            finding=finding,
+            confidence=confidence
+        )
+    
+    try:
+        contents = await file.read()
+        image = Image.open(io.BytesIO(contents))
+        result = analyze_lung_cancer(image)
+        
+        return ImagingAnalysisResponse(
+            success=result["success"],
+            finding=result.get("finding"),
+            confidence=result.get("confidence"),
+            error=result.get("error")
+        )
+    except Exception as e:
+        return ImagingAnalysisResponse(
+            success=False,
+            error=str(e)
+        )
+
+
+@router.post("/analyze/cervical-cancer", response_model=ImagingAnalysisResponse)
+async def analyze_cervical_cancer_image(
+    file: UploadFile = File(...),
+    is_demo: bool = Form(False),
+    demo_type: str = Form(None)
+):
+    """Analyze pap smear for cervical cancer"""
+    if is_demo:
+        demo_results = {
+            "dyskeratotic": ("Dyskeratotic (Abnormal)", 98.1),
+            "koilocytotic": ("Koilocytotic (Abnormal)", 97.5),
+            "metaplastic": ("Metaplastic (Benign)", 99.2),
+            "parabasal": ("Parabasal (Normal)", 98.8),
+            "superficial": ("Superficial (Normal)", 99.5)
+        }
+        finding, confidence = demo_results.get(demo_type, ("Normal", 95.0))
+        return ImagingAnalysisResponse(
+            success=True,
+            finding=finding,
+            confidence=confidence
+        )
+    
+    try:
+        contents = await file.read()
+        image = Image.open(io.BytesIO(contents))
+        result = analyze_cervical_cancer(image)
+        
+        return ImagingAnalysisResponse(
+            success=result["success"],
+            finding=result.get("finding"),
+            confidence=result.get("confidence"),
+            error=result.get("error")
+        )
+    except Exception as e:
+        return ImagingAnalysisResponse(
+            success=False,
+            error=str(e)
+        )
+
+
+@router.post("/analyze/lymphoma", response_model=ImagingAnalysisResponse)
+async def analyze_lymphoma_image(
+    file: UploadFile = File(...),
+    is_demo: bool = Form(False),
+    demo_type: str = Form(None)
+):
+    """Analyze cell image for lymphoma subtype"""
+    if is_demo:
+        demo_results = {
+            "cll": ("Chronic Lymphocytic Leukemia (CLL)", 98.9),
+            "fl": ("Follicular Lymphoma (FL)", 97.2),
+            "mcl": ("Mantle Cell Lymphoma (MCL)", 98.1)
+        }
+        finding, confidence = demo_results.get(demo_type, ("CLL", 95.0))
+        return ImagingAnalysisResponse(
+            success=True,
+            finding=finding,
+            confidence=confidence
+        )
+    
+    try:
+        contents = await file.read()
+        image = Image.open(io.BytesIO(contents))
+        result = analyze_lymphoma(image)
+        
+        return ImagingAnalysisResponse(
+            success=result["success"],
+            finding=result.get("finding"),
+            confidence=result.get("confidence"),
+            error=result.get("error")
+        )
+    except Exception as e:
+        return ImagingAnalysisResponse(
+            success=False,
+            error=str(e)
+        )
+
+
+@router.post("/analyze/oral-cancer", response_model=ImagingAnalysisResponse)
+async def analyze_oral_cancer_image(
+    file: UploadFile = File(...),
+    is_demo: bool = Form(False),
+    demo_type: str = Form(None)
+):
+    """Analyze oral image for cancer"""
+    if is_demo:
+        if demo_type == "normal":
+            return ImagingAnalysisResponse(
+                success=True,
+                finding="Normal Tissue",
+                confidence=99.15
+            )
+        else:
+            return ImagingAnalysisResponse(
+                success=True,
+                finding="Oral Squamous Cell Carcinoma (OSCC) Detected",
+                confidence=96.80
+            )
+    
+    try:
+        contents = await file.read()
+        image = Image.open(io.BytesIO(contents))
+        result = analyze_oral_cancer(image)
         
         return ImagingAnalysisResponse(
             success=result["success"],
@@ -195,6 +395,34 @@ async def get_models_status():
             "model": "brain_cancer_model.onnx",
             "input_size": "224x224",
             "type": "multi-class",
-            "classes": ["Glioma Tumor", "Meningioma Tumor", "Tumor"]
+            "classes": ["Glioma Tumor", "Meningioma Tumor", "Pituitary Tumor"]
+        },
+        "colon_cancer": {
+            "model": "colon_cancer_model.onnx",
+            "input_size": "224x224",
+            "type": "binary"
+        },
+        "lung_cancer": {
+            "model": "lung_cancer_model.onnx",
+            "input_size": "224x224",
+            "type": "multi-class",
+            "classes": ["Lung Adenocarcinoma", "Lung Benign Tissue", "Lung Squamous Cell Carcinoma"]
+        },
+        "cervical_cancer": {
+            "model": "cervical_cancer_model.onnx",
+            "input_size": "224x224",
+            "type": "multi-class",
+            "classes": ["Dyskeratotic", "Koilocytotic", "Metaplastic", "Parabasal", "Superficial-Intermediate"]
+        },
+        "lymphoma": {
+            "model": "lymphoma_model.onnx",
+            "input_size": "224x224",
+            "type": "multi-class",
+            "classes": ["Chronic Lymphocytic Leukemia (CLL)", "Follicular Lymphoma (FL)", "Mantle Cell Lymphoma (MCL)"]
+        },
+        "oral_cancer": {
+            "model": "oral_cancer_model.onnx",
+            "input_size": "224x224",
+            "type": "binary"
         }
     }

@@ -71,6 +71,41 @@ def preprocess_for_brain_cancer(image: Image.Image) -> np.ndarray:
     return np.expand_dims(img_array, axis=0)
 
 
+def preprocess_for_colon_cancer(image: Image.Image) -> np.ndarray:
+    """Preprocess image for colon cancer detection model"""
+    img_resized = image.resize((224, 224)).convert('RGB')
+    img_array = (np.array(img_resized) / 255.0).astype(np.float32)
+    return np.expand_dims(img_array, axis=0)
+
+
+def preprocess_for_lung_cancer(image: Image.Image) -> np.ndarray:
+    """Preprocess image for lung cancer detection model"""
+    img_resized = image.resize((224, 224)).convert('RGB')
+    img_array = (np.array(img_resized) / 255.0).astype(np.float32)
+    return np.expand_dims(img_array, axis=0)
+
+
+def preprocess_for_cervical_cancer(image: Image.Image) -> np.ndarray:
+    """Preprocess image for cervical cancer detection model"""
+    img_resized = image.resize((224, 224)).convert('RGB')
+    img_array = (np.array(img_resized) / 255.0).astype(np.float32)
+    return np.expand_dims(img_array, axis=0)
+
+
+def preprocess_for_lymphoma(image: Image.Image) -> np.ndarray:
+    """Preprocess image for lymphoma detection model"""
+    img_resized = image.resize((224, 224)).convert('RGB')
+    img_array = (np.array(img_resized) / 255.0).astype(np.float32)
+    return np.expand_dims(img_array, axis=0)
+
+
+def preprocess_for_oral_cancer(image: Image.Image) -> np.ndarray:
+    """Preprocess image for oral cancer detection model"""
+    img_resized = image.resize((224, 224)).convert('RGB')
+    img_array = (np.array(img_resized) / 255.0).astype(np.float32)
+    return np.expand_dims(img_array, axis=0)
+
+
 def analyze_pneumonia(image: Image.Image) -> Dict[str, Any]:
     """Analyze chest X-ray for pneumonia"""
     try:
@@ -174,7 +209,7 @@ def analyze_brain_cancer(image: Image.Image) -> Dict[str, Any]:
         predicted_class_index = np.argmax(scores)
         confidence = float(scores[predicted_class_index]) * 100
         
-        class_names = ["Glioma Tumor", "Meningioma Tumor", "Tumor"]
+        class_names = ["Glioma Tumor", "Meningioma Tumor", "Pituitary Tumor"]
         finding = class_names[predicted_class_index]
         
         return {
@@ -182,5 +217,151 @@ def analyze_brain_cancer(image: Image.Image) -> Dict[str, Any]:
             "finding": finding,
             "confidence": confidence
         }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+def analyze_colon_cancer(image: Image.Image) -> Dict[str, Any]:
+    """Analyze histopathology for colon cancer"""
+    try:
+        session = load_model("colon_cancer_model.onnx")
+        if session is None:
+            return {"success": False, "error": "Failed to load colon cancer model"}
+        
+        processed_image = preprocess_for_colon_cancer(image)
+        input_name = session.get_inputs()[0].name
+        output_name = session.get_outputs()[0].name
+        outputs = session.run([output_name], {input_name: processed_image})
+        score = float(outputs[0][0][0])
+        
+        if score > 0.5:
+            return {
+                "success": True,
+                "finding": "Adenocarcinoma Detected",
+                "confidence": score * 100
+            }
+        else:
+            return {
+                "success": True,
+                "finding": "Benign Tissue Detected",
+                "confidence": (1 - score) * 100
+            }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+def analyze_lung_cancer(image: Image.Image) -> Dict[str, Any]:
+    """Analyze histopathology for lung cancer"""
+    try:
+        session = load_model("lung_cancer_model.onnx")
+        if session is None:
+            return {"success": False, "error": "Failed to load lung cancer model"}
+        
+        processed_image = preprocess_for_lung_cancer(image)
+        input_name = session.get_inputs()[0].name
+        output_name = session.get_outputs()[0].name
+        outputs = session.run([output_name], {input_name: processed_image})
+        
+        scores = outputs[0][0]
+        predicted_class_index = np.argmax(scores)
+        confidence = float(scores[predicted_class_index]) * 100
+        
+        class_names = ["Lung Adenocarcinoma", "Lung Benign Tissue", "Lung Squamous Cell Carcinoma"]
+        finding = class_names[predicted_class_index]
+        
+        return {
+            "success": True,
+            "finding": finding,
+            "confidence": confidence
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+def analyze_cervical_cancer(image: Image.Image) -> Dict[str, Any]:
+    """Analyze pap smear for cervical cancer"""
+    try:
+        session = load_model("cervical_cancer_model.onnx")
+        if session is None:
+            return {"success": False, "error": "Failed to load cervical cancer model"}
+        
+        processed_image = preprocess_for_cervical_cancer(image)
+        input_name = session.get_inputs()[0].name
+        output_name = session.get_outputs()[0].name
+        outputs = session.run([output_name], {input_name: processed_image})
+        
+        scores = outputs[0][0]
+        predicted_class_index = np.argmax(scores)
+        confidence = float(scores[predicted_class_index]) * 100
+        
+        class_names = ["Dyskeratotic", "Koilocytotic", "Metaplastic", "Parabasal", "Superficial-Intermediate"]
+        finding = class_names[predicted_class_index]
+        
+        # First 2 classes are abnormal
+        abnormal = predicted_class_index < 2
+        
+        return {
+            "success": True,
+            "finding": finding + (" (Abnormal)" if abnormal else " (Normal/Benign)"),
+            "confidence": confidence,
+            "abnormal": abnormal
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+def analyze_lymphoma(image: Image.Image) -> Dict[str, Any]:
+    """Analyze cell image for lymphoma subtype"""
+    try:
+        session = load_model("lymphoma_model.onnx")
+        if session is None:
+            return {"success": False, "error": "Failed to load lymphoma model"}
+        
+        processed_image = preprocess_for_lymphoma(image)
+        input_name = session.get_inputs()[0].name
+        output_name = session.get_outputs()[0].name
+        outputs = session.run([output_name], {input_name: processed_image})
+        
+        scores = outputs[0][0]
+        predicted_class_index = np.argmax(scores)
+        confidence = float(scores[predicted_class_index]) * 100
+        
+        class_names = ["Chronic Lymphocytic Leukemia (CLL)", "Follicular Lymphoma (FL)", "Mantle Cell Lymphoma (MCL)"]
+        finding = class_names[predicted_class_index]
+        
+        return {
+            "success": True,
+            "finding": finding,
+            "confidence": confidence
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+def analyze_oral_cancer(image: Image.Image) -> Dict[str, Any]:
+    """Analyze oral image for cancer"""
+    try:
+        session = load_model("oral_cancer_model.onnx")
+        if session is None:
+            return {"success": False, "error": "Failed to load oral cancer model"}
+        
+        processed_image = preprocess_for_oral_cancer(image)
+        input_name = session.get_inputs()[0].name
+        output_name = session.get_outputs()[0].name
+        outputs = session.run([output_name], {input_name: processed_image})
+        score = float(outputs[0][0][0])
+        
+        if score > 0.5:
+            return {
+                "success": True,
+                "finding": "Oral Squamous Cell Carcinoma (OSCC) Detected",
+                "confidence": score * 100
+            }
+        else:
+            return {
+                "success": True,
+                "finding": "Normal Tissue",
+                "confidence": (1 - score) * 100
+            }
     except Exception as e:
         return {"success": False, "error": str(e)}
