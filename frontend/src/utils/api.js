@@ -188,6 +188,81 @@ export const imagingAPI = {
 
     return response.json();
   },
+
+  async analyzeColonCancer(file, isDemo = false, demoType = null) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('is_demo', isDemo);
+    if (demoType) formData.append('demo_type', demoType);
+
+    const response = await fetch(`${API_BASE_URL}/imaging/analyze/colon-cancer`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: formData,
+    });
+
+    return response.json();
+  },
+
+  async analyzeLungCancer(file, isDemo = false, demoType = null) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('is_demo', isDemo);
+    if (demoType) formData.append('demo_type', demoType);
+
+    const response = await fetch(`${API_BASE_URL}/imaging/analyze/lung-cancer`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: formData,
+    });
+
+    return response.json();
+  },
+
+  async analyzeCervicalCancer(file, isDemo = false, demoType = null) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('is_demo', isDemo);
+    if (demoType) formData.append('demo_type', demoType);
+
+    const response = await fetch(`${API_BASE_URL}/imaging/analyze/cervical-cancer`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: formData,
+    });
+
+    return response.json();
+  },
+
+  async analyzeLymphoma(file, isDemo = false, demoType = null) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('is_demo', isDemo);
+    if (demoType) formData.append('demo_type', demoType);
+
+    const response = await fetch(`${API_BASE_URL}/imaging/analyze/lymphoma`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: formData,
+    });
+
+    return response.json();
+  },
+
+  async analyzeOralCancer(file, isDemo = false, demoType = null) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('is_demo', isDemo);
+    if (demoType) formData.append('demo_type', demoType);
+
+    const response = await fetch(`${API_BASE_URL}/imaging/analyze/oral-cancer`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: formData,
+    });
+
+    return response.json();
+  },
 };
 
 /**

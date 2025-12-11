@@ -39,14 +39,75 @@ const SCAN_TYPES = [
   },
   { 
     id: 'brain', 
-    label: '🧠 Brain Cancer', 
-    title: 'Brain Tumor Detection (MRI)',
-    subtitle: 'Analyze MRI scans for brain tumors',
+    label: '🧠 Brain Tumors', 
+    title: 'Brain Tumor Classification (MRI)',
+    subtitle: 'Classify brain tumor types from MRI scans',
     inputSize: '224x224',
     demoOptions: [
       { type: 'tumor', label: 'Load General Tumor (Demo)' },
       { type: 'glioma', label: 'Load Glioma Tumor (Demo)' },
       { type: 'meningioma', label: 'Load Meningioma Tumor (Demo)' },
+      { type: 'pituitary', label: 'Load Pituitary Tumor (Demo)' },
+    ],
+  },
+  { 
+    id: 'colon', 
+    label: '🔴 Colon Cancer', 
+    title: 'Colon Cancer Detection (Histopathology)',
+    subtitle: 'Detect adenocarcinoma in colon tissue',
+    inputSize: '224x224',
+    demoOptions: [
+      { type: 'benign', label: 'Load Benign Tissue (Demo)' },
+      { type: 'aca', label: 'Load Adenocarcinoma (Demo)' },
+    ],
+  },
+  { 
+    id: 'lung', 
+    label: '🫀 Lung Cancer', 
+    title: 'Lung Cancer Classification (Histopathology)',
+    subtitle: 'Classify lung cancer types from tissue samples',
+    inputSize: '224x224',
+    demoOptions: [
+      { type: 'benign', label: 'Load Benign Tissue (Demo)' },
+      { type: 'aca', label: 'Load Adenocarcinoma (Demo)' },
+      { type: 'scc', label: 'Load Squamous Cell Carcinoma (Demo)' },
+    ],
+  },
+  { 
+    id: 'cervical', 
+    label: '🔬 Cervical Cancer', 
+    title: 'Cervical Cancer Cell Classification',
+    subtitle: 'Identify cervical cell types from cytology',
+    inputSize: '224x224',
+    demoOptions: [
+      { type: 'dyskeratotic', label: 'Load Dyskeratotic Cells (Demo)' },
+      { type: 'koilocytotic', label: 'Load Koilocytotic Cells (Demo)' },
+      { type: 'metaplastic', label: 'Load Metaplastic Cells (Demo)' },
+      { type: 'parabasal', label: 'Load Parabasal Cells (Demo)' },
+      { type: 'superficial', label: 'Load Superficial Cells (Demo)' },
+    ],
+  },
+  { 
+    id: 'lymphoma', 
+    label: '🩸 Lymphoma', 
+    title: 'Lymphoma Subtype Classification',
+    subtitle: 'Classify lymphoma subtypes from histopathology',
+    inputSize: '224x224',
+    demoOptions: [
+      { type: 'cll', label: 'Load CLL Subtype (Demo)' },
+      { type: 'fl', label: 'Load FL Subtype (Demo)' },
+      { type: 'mcl', label: 'Load MCL Subtype (Demo)' },
+    ],
+  },
+  { 
+    id: 'oral', 
+    label: '👄 Oral Cancer', 
+    title: 'Oral Cancer Detection',
+    subtitle: 'Detect squamous cell carcinoma in oral tissue',
+    inputSize: '224x224',
+    demoOptions: [
+      { type: 'normal', label: 'Load Normal Tissue (Demo)' },
+      { type: 'scc', label: 'Load SCC (Demo)' },
     ],
   },
 ];
@@ -92,6 +153,32 @@ export default function ImagingPage() {
         tumor: '/demo_images/brain_tumor.jpg',
         glioma: '/demo_images/brain_glioma.jpg',
         meningioma: '/demo_images/brain_meningioma.jpg',
+        pituitary: '/demo_images/brain_pituitary.jpg',
+      },
+      colon: {
+        benign: '/demo_images/colon_benign.jpg',
+        aca: '/demo_images/colon_aca.jpg',
+      },
+      lung: {
+        benign: '/demo_images/lung_benign.jpg',
+        aca: '/demo_images/lung_aca.jpg',
+        scc: '/demo_images/lung_scc.jpg',
+      },
+      cervical: {
+        dyskeratotic: '/demo_images/cervix_dyskeratotic.jpg',
+        koilocytotic: '/demo_images/cervix_koilocytotic.jpg',
+        metaplastic: '/demo_images/cervix_metaplastic.jpg',
+        parabasal: '/demo_images/cervix_parabasal.jpg',
+        superficial: '/demo_images/cervix_superficial.jpg',
+      },
+      lymphoma: {
+        cll: '/demo_images/lymphoma_cll.jpg',
+        fl: '/demo_images/lymphoma_fl.jpg',
+        mcl: '/demo_images/lymphoma_mcl.jpg',
+      },
+      oral: {
+        normal: '/demo_images/oral_normal.jpg',
+        scc: '/demo_images/oral_scc.jpg',
       },
     };
     return imageMap[scanType]?.[demoType] || '/demo_images/normal_1.jpeg';
@@ -126,6 +213,21 @@ export default function ImagingPage() {
           break;
         case 'brain':
           response = await imagingAPI.analyzeBrainCancer(file, demoMode, demoType);
+          break;
+        case 'colon':
+          response = await imagingAPI.analyzeColonCancer(file, demoMode, demoType);
+          break;
+        case 'lung':
+          response = await imagingAPI.analyzeLungCancer(file, demoMode, demoType);
+          break;
+        case 'cervical':
+          response = await imagingAPI.analyzeCervicalCancer(file, demoMode, demoType);
+          break;
+        case 'lymphoma':
+          response = await imagingAPI.analyzeLymphoma(file, demoMode, demoType);
+          break;
+        case 'oral':
+          response = await imagingAPI.analyzeOralCancer(file, demoMode, demoType);
           break;
         default:
           throw new Error('Unknown scan type');
