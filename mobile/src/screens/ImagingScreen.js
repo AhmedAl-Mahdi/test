@@ -21,8 +21,13 @@ export default function ImagingScreen() {
   const scanTypes = [
     { id: 'pneumonia', name: 'Pneumonia', color: '#3b82f6' },
     { id: 'breast_cancer', name: 'Breast Cancer', color: '#ec4899' },
-    { id: 'kidney_disease', name: 'Kidney Disease', color: '#f59e0b' },
-    { id: 'brain_tumor', name: 'Brain Tumor', color: '#8b5cf6' },
+    { id: 'kidney_disease', name: 'Kidney', color: '#f59e0b' },
+    { id: 'brain_tumor', name: 'Brain', color: '#8b5cf6' },
+    { id: 'colon_cancer', name: 'Colon', color: '#ef4444' },
+    { id: 'lung_cancer', name: 'Lung', color: '#06b6d4' },
+    { id: 'cervical_cancer', name: 'Cervical', color: '#d946ef' },
+    { id: 'lymphoma', name: 'Lymphoma', color: '#84cc16' },
+    { id: 'oral_cancer', name: 'Oral', color: '#f97316' },
   ];
 
   const pickImage = async () => {
@@ -216,18 +221,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   scanTypeButton: {
-    width: '48%',
+    width: '31%',
     backgroundColor: '#1e293b',
     borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
+    padding: 10,
+    marginBottom: 10,
     alignItems: 'center',
     borderWidth: 2,
     borderColor: '#334155',
   },
   scanTypeText: {
     color: '#94a3b8',
-    fontSize: 14,
+    fontSize: 12,
   },
   scanTypeTextActive: {
     color: '#fff',
