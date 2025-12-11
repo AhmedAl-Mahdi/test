@@ -91,7 +91,7 @@ def get_symptom_analysis(symptoms_description: str) -> dict:
     """
 
     model = genai.GenerativeModel(
-        model_name="gemini-1.5-flash",
+        model_name="gemini-pro",
         system_instruction=system_prompt
     )
     
@@ -148,7 +148,7 @@ def get_mindwell_response(chat_history: list) -> str:
     """
 
     model = genai.GenerativeModel(
-        model_name="gemini-1.5-flash",
+        model_name="gemini-pro",
         system_instruction=mindwell_system_prompt
     )
 
@@ -202,7 +202,7 @@ def get_mindwell_response_stream(chat_history: list) -> Generator[str, None, Non
     """
 
     model = genai.GenerativeModel(
-        model_name="gemini-1.5-flash",
+        model_name="gemini-pro",
         system_instruction=mindwell_system_prompt
     )
 
